@@ -2,12 +2,11 @@
 
 Prenotazione delle pause giornaliere: slot da 10 minuti, 2 persone per slot.
 PHP 8.2+ con le estensioni `pdo_sqlite`, `gd`, `curl`, `openssl`, `mbstring`.
-Le librerie per le notifiche si installano con Composer (`composer install`).
+Le librerie per le notifiche sono già incluse nel repository (`vendor/`); dopo averle aggiornate con Composer, ricordati di committarle.
 
 ## Avvio in locale
 
 ```bash
-composer install
 php -S localhost:8000 -t public
 ```
 
@@ -44,8 +43,7 @@ Per aggiungere una persona da terminale: `php bin/create-user.php "Nome Cognome"
 
 ### Promemoria in produzione (Plesk)
 
-1. **Librerie** — in *Git* → impostazioni del repository → *Azioni di distribuzione aggiuntive*, aggiungi
-   `composer install --no-dev --optimize-autoloader` (oppure usa lo strumento *PHP Composer* del dominio e premi *Installa*).
+1. **Librerie** — niente da fare: `vendor/` arriva con il deploy da Git.
 2. **Invio ogni minuto** — in *Operazioni pianificate* aggiungi un'operazione *Esegui uno script PHP*:
    script `httpdocs/bin/send-reminders.php`, frequenza *Ogni minuto* (`* * * * *`), stessa versione PHP del sito.
 
