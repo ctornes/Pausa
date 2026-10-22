@@ -38,7 +38,8 @@ document.addEventListener('submit', async (event) => {
   busy = true;
 
   try {
-    const res = await fetch(form.action, {
+    // Not form.action: the forms have a field named "action", which shadows that property.
+    const res = await fetch(form.getAttribute('action') || location.href, {
       method: 'POST',
       body: new FormData(form),
       headers: { 'X-Requested-With': 'fetch' },
