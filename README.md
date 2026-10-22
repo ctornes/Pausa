@@ -19,7 +19,7 @@ Apri http://localhost:8000: al primo avvio crei l'amministratore, poi da **Perso
 - Ognuno entra scegliendo il proprio nome e digitando il PIN di 4 cifre (5 tentativi sbagliati = blocco di 5 minuti).
 - Nella pagina **Oggi** si prenota uno slot libero o ci si unisce a chi è già prenotato. Ognuno può avere una sola pausa per fascia oraria (es. una al mattino e una al pomeriggio); scegliere un altro slot nella stessa fascia sposta la prenotazione.
 - Si può annullare o spostare la pausa fino all'inizio dello slot. La pagina si aggiorna da sola ogni 30 secondi.
-- Gli admin possono assegnare **pause fisse**: la stessa persona nello stesso slot nei giorni scelti, prenotata in automatico ogni giorno. La persona non può annullarla né spostarla; per saltare un giorno l'admin la toglie dallo Storico.
+- Gli admin possono assegnare **pause fisse**: la stessa persona nello stesso slot nei giorni scelti, prenotata in automatico ogni giorno. Ogni giorno la persona può spostarla su un altro orario della stessa fascia (il giorno dopo torna all'orario fisso), ma non annullarla: per saltare un giorno l'admin la toglie dallo Storico.
 - Si può **installare come app** sul telefono o sul computer (PWA): su Android/Chrome "Installa app", su iPhone Safari → Condividi → Aggiungi alla schermata Home.
 - **Promemoria**: da **Il mio profilo** ognuno attiva le notifiche sul proprio dispositivo e sceglie se riceverle 1, 2 o 5 minuti prima della pausa; un secondo avviso arriva 1 minuto prima che la pausa finisca (disattivabile). Su iPhone funzionano solo dall'app installata (iOS 16.4+).
 - Gli admin gestiscono persone, orari (fasce, durata, posti per slot), pause fisse e registrazioni, e vedono lo storico.

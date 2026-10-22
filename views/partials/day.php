@@ -48,7 +48,7 @@ $actionForm = function (array $slot, string $class = '') use ($labels): string {
         <?php if ($active['action'] === 'leave'): ?>
             <div class="hero__actions"><?= $actionForm($active, 'button--quiet') ?></div>
         <?php elseif ($active['isFixed'] && $active['state'] === 'upcoming'): ?>
-            <p class="hero__note">Pausa assegnata dall'amministrazione: per cambiarla o annullarla chiedi a un amministratore.</p>
+            <p class="hero__note">Pausa assegnata dall'amministrazione: oggi puoi spostarla con "Sposta qui" su un altro orario della stessa fascia; per annullarla chiedi a un amministratore.</p>
         <?php endif ?>
         <?php if ($later): ?>
             <p class="hero__note">Hai un'altra pausa alle <strong><?= e($later['start']) ?></strong>.</p>

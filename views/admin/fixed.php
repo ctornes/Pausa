@@ -8,7 +8,7 @@ use App\FixedSlotService;
 
 <section class="panel">
     <h2 class="section-title">Assegna una pausa fissa</h2>
-    <p class="field__hint">Ogni giorno scelto la persona si ritrova prenotata in quello slot. Non può annullarla né spostarla; per saltare un singolo giorno, toglila dallo Storico.</p>
+    <p class="field__hint">Ogni giorno scelto la persona si ritrova prenotata in quello slot. Quel giorno può spostarla su un altro orario della stessa fascia (il giorno dopo torna all'orario fisso), ma non annullarla: per saltare un singolo giorno, toglila dallo Storico.</p>
     <form class="stack" method="post" action="<?= url('/admin/fixed.php') ?>">
         <?= Csrf::field() ?>
         <input type="hidden" name="action" value="create">
