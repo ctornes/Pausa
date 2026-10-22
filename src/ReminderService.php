@@ -7,13 +7,19 @@ namespace App;
 use DateTimeImmutable;
 use PDO;
 
-/** Sends "your break starts in N minutes" reminders; run every minute by a scheduled task. */
+/**
+ * Break reminders, run every minute by a scheduled task: one before the break starts
+ * (minutes chosen by each person) and one shortly before it ends.
+ */
 final class ReminderService
 {
+    public const END_REMINDER_MINUTES = 1;
+
     public function __construct(
         private readonly PDO $db,
         private readonly PushService $push,
         private readonly FixedSlotService $fixed,
+        private readonly SlotService $slots,
     ) {
     }
 
@@ -25,39 +31,89 @@ final class ReminderService
         // so they get a reminder even if nobody has opened the app yet.
         $this->fixed->apply($date);
 
-        $stmt = $this->db->prepare(
-            'SELECT b.id, b.user_id, b.slot_start, u.reminder_minutes
-             FROM bookings b JOIN users u ON u.id = b.user_id
-             WHERE b.date = ? AND b.reminded_at IS NULL AND u.active = 1
-               AND EXISTS (SELECT 1 FROM push_subscriptions s WHERE s.user_id = b.user_id)'
-        );
-        $stmt->execute([$date]);
+        return [...$this->startReminders($date, $now), ...$this->endReminders($date, $now)];
+    }
 
+    /** @return list<string> */
+    private function startReminders(string $date, DateTimeImmutable $now): array
+    {
         $log = [];
-        foreach ($stmt->fetchAll() as $booking) {
+        foreach ($this->pending($date, 'reminded_at') as $booking) {
             $start = new DateTimeImmutable("$date {$booking['slot_start']}");
-            $due = $start->modify("-{$booking['reminder_minutes']} minutes");
-            if ($now < $due || $now >= $start) {
+            if (!$this->isDue($now, $start->modify("-{$booking['reminder_minutes']} minutes"), $start)) {
                 continue;
             }
+            $this->mark($booking['id'], 'reminded_at', $now);
 
-            // Mark first: a failed delivery must not turn into a reminder every minute.
-            $this->db->prepare('UPDATE bookings SET reminded_at = ? WHERE id = ?')
-                ->execute([$now->format('Y-m-d H:i:s'), $booking['id']]);
-
-            $minutesLeft = max(1, (int) ceil(($start->getTimestamp() - $now->getTimestamp()) / 60));
+            $minutesLeft = self::minutesUntil($now, $start);
             $reached = $this->push->send((int) $booking['user_id'], [
                 'title' => $minutesLeft === 1 ? 'Tra 1 minuto sei in pausa' : "Tra $minutesLeft minuti sei in pausa",
-                'body' => $this->body($date, $booking['slot_start'], (int) $booking['user_id']),
+                'body' => $this->startBody($date, $booking['slot_start'], (int) $booking['user_id']),
                 'tag' => 'reminder-' . $booking['id'],
             ]);
-            $log[] = "booking {$booking['id']} ({$booking['slot_start']}): $reached device(s)";
+            $log[] = "start booking {$booking['id']} ({$booking['slot_start']}): $reached device(s)";
         }
 
         return $log;
     }
 
-    private function body(string $date, string $slot, int $userId): string
+    /** @return list<string> */
+    private function endReminders(string $date, DateTimeImmutable $now): array
+    {
+        $log = [];
+        foreach ($this->pending($date, 'end_reminded_at', 'u.end_reminder = 1') as $booking) {
+            $endTime = $this->slots->endOf($booking['slot_start']);
+            $end = new DateTimeImmutable("$date $endTime");
+            if (!$this->isDue($now, $end->modify('-' . self::END_REMINDER_MINUTES . ' minutes'), $end)) {
+                continue;
+            }
+            $this->mark($booking['id'], 'end_reminded_at', $now);
+
+            $minutesLeft = self::minutesUntil($now, $end);
+            $reached = $this->push->send((int) $booking['user_id'], [
+                'title' => $minutesLeft === 1 ? 'Tra 1 minuto finisce la pausa' : "Tra $minutesLeft minuti finisce la pausa",
+                'body' => "Alle $endTime si torna al lavoro.",
+                'tag' => 'end-' . $booking['id'],
+            ]);
+            $log[] = "end booking {$booking['id']} ({$booking['slot_start']}): $reached device(s)";
+        }
+
+        return $log;
+    }
+
+    /** Today's bookings still waiting for the reminder tracked in $column, for people with a device. */
+    private function pending(string $date, string $column, string $extraCondition = '1 = 1'): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT b.id, b.user_id, b.slot_start, u.reminder_minutes
+             FROM bookings b JOIN users u ON u.id = b.user_id
+             WHERE b.date = ? AND b.$column IS NULL AND u.active = 1 AND $extraCondition
+               AND EXISTS (SELECT 1 FROM push_subscriptions s WHERE s.user_id = b.user_id)"
+        );
+        $stmt->execute([$date]);
+
+        return $stmt->fetchAll();
+    }
+
+    /** Due from $from until $until (exclusive): a late run still sends, a missed moment doesn't. */
+    private function isDue(DateTimeImmutable $now, DateTimeImmutable $from, DateTimeImmutable $until): bool
+    {
+        return $now >= $from && $now < $until;
+    }
+
+    /** Marked before sending: a failed delivery must not turn into a reminder every minute. */
+    private function mark(int|string $bookingId, string $column, DateTimeImmutable $now): void
+    {
+        $this->db->prepare("UPDATE bookings SET $column = ? WHERE id = ?")
+            ->execute([$now->format('Y-m-d H:i:s'), $bookingId]);
+    }
+
+    private static function minutesUntil(DateTimeImmutable $now, DateTimeImmutable $moment): int
+    {
+        return max(1, (int) ceil(($moment->getTimestamp() - $now->getTimestamp()) / 60));
+    }
+
+    private function startBody(string $date, string $slot, int $userId): string
     {
         $stmt = $this->db->prepare(
             'SELECT u.name FROM bookings b JOIN users u ON u.id = b.user_id

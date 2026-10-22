@@ -22,7 +22,7 @@ if (is_post()) {
             photos()->save($userId, $photo);
             flash('Foto aggiornata.');
         } elseif ($action === 'reminders') {
-            push()->setReminderMinutes($userId, (int) ($_POST['reminder_minutes'] ?? 0));
+            push()->setPreferences($userId, (int) ($_POST['reminder_minutes'] ?? 0), isset($_POST['end_reminder']));
             flash('Preferenze dei promemoria salvate.');
         } elseif ($action === 'remove_photo') {
             photos()->delete($userId);
@@ -56,6 +56,7 @@ page('account', 'Il mio profilo', [
         'key' => push()->publicKey(),
         'devices' => push()->deviceCount($userId),
         'minutes' => (int) $user['reminder_minutes'],
+        'endReminder' => (bool) $user['end_reminder'],
     ] : null,
     'scripts' => ['photo-field.js', 'push.js'],
 ]);

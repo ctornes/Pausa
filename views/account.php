@@ -46,6 +46,10 @@
                         <?php endforeach ?>
                     </select>
                 </label>
+                <label class="check">
+                    <input type="checkbox" name="end_reminder" value="1" <?= $push['endReminder'] ? 'checked' : '' ?>>
+                    Avvisami anche <?= App\ReminderService::END_REMINDER_MINUTES ?> minuto prima che la pausa finisca
+                </label>
                 <button class="button button--move button--small" type="submit">Salva</button>
             </form>
             <?php if ($push['devices'] > 0): ?>

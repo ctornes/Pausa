@@ -62,12 +62,13 @@ final class PushService
     }
 
     /** @throws UserError */
-    public function setReminderMinutes(int $userId, int $minutes): void
+    public function setPreferences(int $userId, int $minutes, bool $endReminder): void
     {
         if (!in_array($minutes, self::REMINDER_MINUTES, true)) {
             throw new UserError('Scegli 1, 2 o 5 minuti.');
         }
-        $this->db->prepare('UPDATE users SET reminder_minutes = ? WHERE id = ?')->execute([$minutes, $userId]);
+        $this->db->prepare('UPDATE users SET reminder_minutes = ?, end_reminder = ? WHERE id = ?')
+            ->execute([$minutes, (int) $endReminder, $userId]);
     }
 
     /**

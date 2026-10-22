@@ -676,3 +676,4 @@ select {
 .push__minutes .field { flex: 0 1 220px; }
 .push__help summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 .push__help p { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
+.push__minutes .check { flex-basis: 100%; order: 1; }

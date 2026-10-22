@@ -185,5 +185,5 @@ function reminders(): ReminderService
 {
     static $reminders = null;
 
-    return $reminders ??= new ReminderService(Db::get(), push(), fixed_slots());
+    return $reminders ??= new ReminderService(Db::get(), push(), fixed_slots(), new SlotService(settings()));
 }
