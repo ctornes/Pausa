@@ -37,6 +37,28 @@
         <p class="field__hint">Chi si registra inserisce nome, cognome e PIN e resta in attesa finché un amministratore non lo attiva da Persone; non diventa mai amministratore. Chiudi la registrazione quando ci sono tutti; puoi sempre disattivare qualcuno da Persone.</p>
     </section>
 
+    <?php if ($reminders): $lastRun = $reminders['lastRun']; ?>
+        <section class="panel stack">
+            <h2 class="section-title">Promemoria</h2>
+            <?php if ($lastRun === null): ?>
+                <p class="form-error">L'operazione pianificata non è mai partita: in Plesk crea un'operazione che esegue
+                    <code>bin/send-reminders.php</code> ogni minuto.</p>
+            <?php elseif (time() - $lastRun > 180): ?>
+                <p class="form-error">L'operazione pianificata non gira da <?= e(date('d/m H:i', $lastRun)) ?>: controllala in Plesk.</p>
+            <?php else: ?>
+                <p class="field__hint">L'operazione pianificata funziona: ultimo controllo alle <?= e(date('H:i:s', $lastRun)) ?>.</p>
+            <?php endif ?>
+            <details class="push__help">
+                <summary>Ultimi eventi</summary>
+                <?php if ($reminders['log'] === []): ?>
+                    <p>Nessun promemoria inviato finora.</p>
+                <?php else: ?>
+                    <pre class="log"><?= e(implode("\n", $reminders['log'])) ?></pre>
+                <?php endif ?>
+            </details>
+        </section>
+    <?php endif ?>
+
     <div class="form-actions">
         <?php if ($error): ?>
             <p class="form-error"><?= e($error) ?></p>

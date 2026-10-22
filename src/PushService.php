@@ -8,6 +8,7 @@ use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\VAPID;
 use Minishlink\WebPush\WebPush;
 use PDO;
+use Psr\Log\LoggerInterface;
 
 /** Web Push: remembers which devices want reminders and sends them notifications. */
 final class PushService
@@ -15,11 +16,13 @@ final class PushService
     public const REMINDER_MINUTES = [1, 2, 5];
 
     private ?WebPush $webPush = null;
+    private ?string $lastError = null;
 
     public function __construct(
         private readonly PDO $db,
         private readonly string $keyFile,
         private readonly string $subject,
+        private readonly LoggerInterface $log,
     ) {
     }
 
@@ -80,10 +83,13 @@ final class PushService
      */
     public function send(int $userId, array $message): int
     {
+        $this->lastError = null;
         $stmt = $this->db->prepare('SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?');
         $stmt->execute([$userId]);
         $devices = $stmt->fetchAll();
         if ($devices === []) {
+            $this->lastError = 'nessun dispositivo registrato';
+
             return 0;
         }
 
@@ -107,17 +113,33 @@ final class PushService
                 $reached++;
             } elseif ($report->isSubscriptionExpired()) {
                 $this->db->prepare('DELETE FROM push_subscriptions WHERE endpoint = ?')->execute([$report->getEndpoint()]);
+                $this->log->info("user $userId: device unsubscribed, removed");
             } else {
-                error_log('[pausa] push failed: ' . $report->getReason());
+                // The push service's answer body usually says what's wrong (e.g. a key mismatch).
+                $status = $report->getResponse()?->getStatusCode();
+                $detail = trim(mb_substr((string) $report->getResponseContent(), 0, 200));
+                $this->lastError = trim(($status ? "HTTP $status " : '') . $report->getReason() . ($detail !== '' ? ": $detail" : ''));
+                $this->log->warning("user $userId: push failed: {$this->lastError}");
             }
         }
 
         return $reached;
     }
 
+    /** Why the last send() reached no device, if it didn't. */
+    public function lastError(): ?string
+    {
+        return $this->lastError;
+    }
+
     private function webPush(): WebPush
     {
-        return $this->webPush ??= new WebPush(['VAPID' => ['subject' => $this->subject] + $this->keys()]);
+        // With a logger the library reports notices (e.g. "install GMP for speed") there instead of
+        // trigger_error(), which our strict error handler would turn into a failed send.
+        return $this->webPush ??= new WebPush(
+            ['VAPID' => ['subject' => $this->subject] + $this->keys()],
+            logger: $this->log,
+        );
     }
 
     /**

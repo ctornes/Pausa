@@ -34,5 +34,8 @@ page('admin/settings', 'Impostazioni', [
         'self_signup' => $settings->selfSignup(),
     ],
     'slotCount' => (new SlotService($settings))->count(),
+    'reminders' => App\PushService::available()
+        ? ['lastRun' => reminder_log()->lastRun(), 'log' => reminder_log()->tail(15)]
+        : null,
     'capacity' => $settings->capacity(),
 ]);

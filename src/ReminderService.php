@@ -46,12 +46,11 @@ final class ReminderService
             $this->mark($booking['id'], 'reminded_at', $now);
 
             $minutesLeft = self::minutesUntil($now, $start);
-            $reached = $this->push->send((int) $booking['user_id'], [
+            $log[] = 'start ' . $this->deliver($booking, [
                 'title' => $minutesLeft === 1 ? 'Tra 1 minuto sei in pausa' : "Tra $minutesLeft minuti sei in pausa",
                 'body' => $this->startBody($date, $booking['slot_start'], (int) $booking['user_id']),
                 'tag' => 'reminder-' . $booking['id'],
             ]);
-            $log[] = "start booking {$booking['id']} ({$booking['slot_start']}): $reached device(s)";
         }
 
         return $log;
@@ -70,15 +69,27 @@ final class ReminderService
             $this->mark($booking['id'], 'end_reminded_at', $now);
 
             $minutesLeft = self::minutesUntil($now, $end);
-            $reached = $this->push->send((int) $booking['user_id'], [
+            $log[] = 'end ' . $this->deliver($booking, [
                 'title' => $minutesLeft === 1 ? 'Tra 1 minuto finisce la pausa' : "Tra $minutesLeft minuti finisce la pausa",
                 'body' => "Alle $endTime si torna al lavoro.",
                 'tag' => 'end-' . $booking['id'],
             ]);
-            $log[] = "end booking {$booking['id']} ({$booking['slot_start']}): $reached device(s)";
         }
 
         return $log;
+    }
+
+    /** Sends one reminder; a failure is reported in the log line instead of stopping the other reminders. */
+    private function deliver(array $booking, array $message): string
+    {
+        $what = "booking {$booking['id']} ({$booking['slot_start']}, user {$booking['user_id']})";
+        try {
+            $reached = $this->push->send((int) $booking['user_id'], $message);
+        } catch (\Throwable $e) {
+            return "$what: ERROR " . $e->getMessage();
+        }
+
+        return "$what: $reached device(s)" . ($reached === 0 ? ' — ' . $this->push->lastError() : '');
     }
 
     /** Today's bookings still waiting for the reminder tracked in $column, for people with a device. */

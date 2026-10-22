@@ -18,6 +18,13 @@ if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
     exit(0);
 }
 
-foreach (reminders()->run(new DateTimeImmutable()) as $line) {
-    echo date('H:i:s'), ' ', $line, "\n";
+reminder_log()->heartbeat();
+try {
+    foreach (reminders()->run(new DateTimeImmutable()) as $line) {
+        reminder_log()->info($line);
+        echo date('H:i:s'), ' ', $line, "\n";
+    }
+} catch (Throwable $e) {
+    reminder_log()->error('run failed: ' . $e->getMessage());
+    throw $e;
 }

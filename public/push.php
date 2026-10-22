@@ -31,14 +31,20 @@ try {
             push()->unsubscribe($userId, $endpoint);
             json_response(['ok' => true, 'message' => 'Promemoria disattivati su questo dispositivo.']);
         case 'test':
-            $reached = push()->send($userId, [
-                'title' => 'Promemoria attivi',
-                'body' => 'Riceverai un avviso ' . $user['reminder_minutes'] . ' min prima di ogni pausa.',
-                'tag' => 'test',
-            ]);
+            // Report the real cause: this button is how people (and we) find out why reminders don't arrive.
+            try {
+                $reached = push()->send($userId, [
+                    'title' => 'Promemoria attivi',
+                    'body' => 'Riceverai un avviso ' . $user['reminder_minutes'] . ' min prima di ogni pausa.',
+                    'tag' => 'test',
+                ]);
+            } catch (Throwable $e) {
+                reminder_log()->error("user $userId: test notification failed: " . $e->getMessage());
+                json_response(['ok' => false, 'message' => 'Invio non riuscito: ' . $e->getMessage()], 500);
+            }
             json_response($reached > 0
-                ? ['ok' => true, 'message' => 'Notifica di prova inviata: dovrebbe arrivare tra pochi secondi.']
-                : ['ok' => false, 'message' => 'Nessun dispositivo raggiunto: riattiva i promemoria e riprova.']);
+                ? ['ok' => true, 'message' => "Notifica di prova inviata a $reached " . ($reached === 1 ? 'dispositivo' : 'dispositivi') . ': dovrebbe arrivare tra pochi secondi.']
+                : ['ok' => false, 'message' => 'Nessun dispositivo raggiunto (' . push()->lastError() . '). Tocca "Disattiva", poi "Attiva su questo dispositivo" e riprova.']);
         default:
             throw new UserError('Azione non riconosciuta.');
     }

@@ -745,3 +745,5 @@ select {
 
 /* Long names in the top bar shouldn't push the menu around. */
 .who__name span:last-child { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.log { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--paper); font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }

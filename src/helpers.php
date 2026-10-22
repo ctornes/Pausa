@@ -7,6 +7,7 @@ use App\Db;
 use App\FixedSlotService;
 use App\PhotoStore;
 use App\PushService;
+use App\ReminderLog;
 use App\ReminderService;
 use App\Settings;
 use App\SlotService;
@@ -178,7 +179,7 @@ function push(): PushService
 {
     static $push = null;
 
-    return $push ??= new PushService(Db::get(), dirname(config('db_path')) . '/vapid.json', config('push_subject'));
+    return $push ??= new PushService(Db::get(), dirname(config('db_path')) . '/vapid.json', config('push_subject'), reminder_log());
 }
 
 function reminders(): ReminderService
@@ -186,4 +187,12 @@ function reminders(): ReminderService
     static $reminders = null;
 
     return $reminders ??= new ReminderService(Db::get(), push(), fixed_slots(), new SlotService(settings()));
+}
+
+function reminder_log(): ReminderLog
+{
+    static $log = null;
+    $dir = dirname(config('db_path'));
+
+    return $log ??= new ReminderLog("$dir/reminders.log", "$dir/reminders.last");
 }
