@@ -29,7 +29,7 @@ $actionForm = function (array $slot, string $class = '') use ($labels): string {
 <section class="hero<?= $active ? ' hero--booked' : '' ?><?= $active && $active['state'] === 'current' ? ' hero--now' : '' ?>"
          <?= $active && $active['state'] === 'current' ? 'style="--progress: ' . round($active['progress'], 3) . '"' : '' ?>>
     <?php if ($active): $with = $others($active); ?>
-        <p class="eyebrow"><?= $active['state'] === 'current' ? 'Sei in pausa adesso' : ($active['isFixed'] ? 'La tua pausa fissa' : 'La tua pausa') ?></p>
+        <p class="eyebrow"><?= $active['state'] === 'current' ? 'Sei in pausa adesso' : 'La tua pausa' ?></p>
         <p class="hero__time"><?= e($active['start']) ?><span class="hero__end">–<?= e($active['end']) ?></span></p>
         <div class="hero__pair" aria-hidden="true">
             <?= avatar($userId, $user['name'], $user['photo_version'], 'avatar--lg') ?>
@@ -50,7 +50,7 @@ $actionForm = function (array $slot, string $class = '') use ($labels): string {
         <?php if ($active['action'] === 'leave'): ?>
             <div class="hero__actions"><?= $actionForm($active, 'button--quiet') ?></div>
         <?php elseif ($active['isFixed'] && $active['state'] === 'upcoming'): ?>
-            <p class="hero__note">È una pausa fissa: per cambiarla o annullarla chiedi a un amministratore.</p>
+            <p class="hero__note">Pausa assegnata dall'amministrazione: per cambiarla o annullarla chiedi a un amministratore.</p>
         <?php endif ?>
     <?php elseif ($done): $last = end($day['mine']); ?>
         <p class="eyebrow">Pausa fatta</p>
@@ -100,7 +100,6 @@ $actionForm = function (array $slot, string $class = '') use ($labels): string {
                             <span class="seat<?= $me ? ' seat--me' : '' ?>">
                                 <?= avatar($p['user_id'], $p['name'], $p['photo']) ?>
                                 <span class="seat__name"><?= $me ? 'Tu' : e($p['name']) ?></span>
-                                <?php if ($p['fixed'] && !$me): ?><span class="seat__fixed" title="Pausa fissa">fissa</span><?php endif ?>
                             </span>
                         <?php endforeach ?>
                         <?php for ($s = 0; $s < $slot['free']; $s++): ?>
@@ -115,8 +114,6 @@ $actionForm = function (array $slot, string $class = '') use ($labels): string {
                             <?= $actionForm($slot) ?>
                         <?php elseif ($slot['state'] === 'current'): ?>
                             <span class="tag tag--now">adesso</span>
-                        <?php elseif ($slot['isFixed']): ?>
-                            <span class="tag tag--fixed">fissa</span>
                         <?php elseif ($slot['state'] === 'upcoming' && $slot['free'] === 0 && !$slot['isMine']): ?>
                             <span class="tag">pieno</span>
                         <?php endif ?>
