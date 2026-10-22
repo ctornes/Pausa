@@ -677,3 +677,52 @@ select {
 .push__help summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 .push__help p { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
 .push__minutes .check { flex-basis: 100%; order: 1; }
+
+/* ---------- Compact board ---------- */
+
+/* Empty slots are the majority: one slim line each, so the day fits in a couple of screens. */
+.slots { gap: 6px; }
+.slot--empty { padding-block: 7px; }
+.slot--empty .slot__time time { font-size: 1.1rem; }
+.slot--empty .slot__end { display: none; }
+.slot--empty .button { min-height: 34px; padding: 6px 16px; font-size: 0.9rem; }
+.slot__vacancy { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); white-space: nowrap; }
+.slot__dots { display: inline-flex; }
+.slot__dots i { width: 16px; height: 16px; border: 1.5px dashed var(--line); border-radius: 50%; }
+.slot__dots i + i { margin-left: -5px; }
+
+/* Morning / afternoon switcher, kept in view while scrolling. */
+.jump {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+  margin: 0 calc(-1 * var(--gutter)) 12px;
+  padding: 10px var(--gutter);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  backdrop-filter: blur(8px);
+}
+.jump a {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.jump a span { margin-left: 4px; color: var(--muted); font-weight: 500; }
+.jump a[aria-current] { border-color: var(--accent); background: var(--accent-soft); }
+.window { scroll-margin-top: 64px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+@media (max-width: 560px) {
+  .slot--empty { padding-block: 6px; }
+  .jump a span { display: none; }
+}

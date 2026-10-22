@@ -75,35 +75,64 @@ $actionForm = function (array $slot, string $class = '') use ($labels): string {
     <?php endif ?>
 </section>
 
-<?php foreach ($day['windows'] as $i => $window): ?>
-    <?php
-    // Past slots nobody used are hidden; a window with nothing left to show is hidden too.
+<?php
+// Past slots nobody used are hidden; a window with nothing left to show is hidden too.
+$shown = [];
+foreach ($day['windows'] as $i => $window) {
     $visible = array_filter($window['slots'], fn (array $s) => $s['state'] !== 'past' || $s['people'] !== []);
-    if ($visible === []) {
-        continue;
+    if ($visible !== []) {
+        $shown[$i] = ['window' => $window, 'slots' => $visible];
     }
-    ?>
-    <section class="window" aria-labelledby="window-<?= $i ?>">
-        <h2 class="window__title" id="window-<?= $i ?>">
-            <?= $window['start'] < '13:00' ? 'Mattina' : 'Pomeriggio' ?>
+}
+$windowName = fn (array $window) => $window['start'] < '13:00' ? 'Mattina' : 'Pomeriggio';
+// The switcher highlights the window you're most likely after: the first one not over yet.
+$nowWindow = null;
+foreach ($shown as $i => $entry) {
+    foreach ($entry['slots'] as $s) {
+        if ($s['state'] !== 'past') {
+            $nowWindow ??= $i;
+        }
+    }
+}
+?>
+<?php if (count($shown) > 1): ?>
+    <nav class="jump" aria-label="Vai alla fascia">
+        <?php foreach ($shown as $i => ['window' => $window]): ?>
+            <a href="#window-<?= $i ?>" <?= $i === $nowWindow ? 'aria-current="true"' : '' ?>>
+                <?= $windowName($window) ?> <span><?= e($window['start']) ?>–<?= e($window['end']) ?></span>
+            </a>
+        <?php endforeach ?>
+    </nav>
+<?php endif ?>
+
+<?php foreach ($shown as $i => ['window' => $window, 'slots' => $visible]): ?>
+    <section class="window" id="window-<?= $i ?>" aria-labelledby="window-title-<?= $i ?>">
+        <h2 class="window__title" id="window-title-<?= $i ?>">
+            <?= $windowName($window) ?>
             <span class="window__range"><?= e($window['start']) ?>–<?= e($window['end']) ?></span>
         </h2>
         <ol class="slots">
-            <?php foreach ($visible as $slot): ?>
-                <li class="slot slot--<?= $slot['state'] ?><?= $slot['isMine'] ? ' slot--mine' : '' ?><?= $slot['free'] === 0 ? ' slot--full' : '' ?>"
+            <?php foreach ($visible as $slot): $empty = $slot['people'] === []; ?>
+                <li class="slot slot--<?= $slot['state'] ?><?= $slot['isMine'] ? ' slot--mine' : '' ?><?= $slot['free'] === 0 ? ' slot--full' : '' ?><?= $empty ? ' slot--empty' : '' ?>"
                     <?= $slot['state'] === 'current' ? 'style="--progress: ' . round($slot['progress'], 3) . '"' : '' ?>>
                     <p class="slot__time">
                         <time><?= e($slot['start']) ?></time>
                         <span class="slot__end">–<?= e($slot['end']) ?></span>
                     </p>
                     <div class="slot__seats">
+                        <?php if ($empty): ?>
+                            <span class="slot__vacancy">
+                                <span class="slot__dots" aria-hidden="true"><?= str_repeat('<i></i>', min($slot['free'], 4)) ?></span>
+                                <?= $slot['free'] === 1 ? '1 posto libero' : $slot['free'] . ' posti liberi' ?>
+                            </span>
+                        <?php endif ?>
                         <?php foreach ($slot['people'] as $p): $me = $p['user_id'] === $userId; ?>
                             <span class="seat<?= $me ? ' seat--me' : '' ?>">
                                 <?= avatar($p['user_id'], $p['name'], $p['photo']) ?>
                                 <span class="seat__name"><?= $me ? 'Tu' : e($p['name']) ?></span>
                             </span>
                         <?php endforeach ?>
-                        <?php for ($s = 0; $s < $slot['free']; $s++): ?>
+                        <?php for ($s = 0; !$empty && $s < $slot['free']; $s++): ?>
                             <span class="seat seat--free">
                                 <span class="avatar avatar--empty" aria-hidden="true"></span>
                                 <span class="seat__name">libero</span>
