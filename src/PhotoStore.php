@@ -56,7 +56,7 @@ final class PhotoStore
      */
     public function normalize(string $bytes): string
     {
-        $image = strlen($bytes) > 0 && strlen($bytes) <= self::MAX_BYTES && getimagesizefromstring($bytes)
+        $image = strlen($bytes) > 0 && strlen($bytes) <= self::MAX_BYTES && @getimagesizefromstring($bytes)
             ? @imagecreatefromstring($bytes)
             : false;
         if (!$image) {

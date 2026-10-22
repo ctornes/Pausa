@@ -18,9 +18,7 @@ final class Db
         }
 
         $path = config('db_path');
-        if (!is_dir(dirname($path))) {
-            mkdir(dirname($path), 0775, true);
-        }
+        self::assertWritable($path);
 
         $pdo = new PDO('sqlite:' . $path, options: [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -33,6 +31,27 @@ final class Db
         self::migrate($pdo);
 
         return $pdo;
+    }
+
+    /**
+     * SQLite writes the database file plus -wal/-shm files next to it, so the folder must be
+     * writable too. Checking up front turns an obscure "readonly database" error into a fix.
+     */
+    private static function assertWritable(string $path): void
+    {
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        $fix = 'Un amministratore deve dare i permessi di scrittura alla cartella data/ e a tutto il suo contenuto.';
+        if (!is_dir($dir) || !is_writable($dir)) {
+            throw new SetupError("Il server non può salvare le prenotazioni: la cartella data/ non è scrivibile. $fix");
+        }
+        foreach ([$path, "$path-wal", "$path-shm"] as $file) {
+            if (is_file($file) && !is_writable($file)) {
+                throw new SetupError('Il server non può salvare le prenotazioni: il file ' . basename($file) . " è in sola lettura. $fix");
+            }
+        }
     }
 
     /** Applies each migrations/NNN_*.sql newer than the database's user_version, once. */

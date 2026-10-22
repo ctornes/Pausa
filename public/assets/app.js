@@ -48,11 +48,18 @@ document.addEventListener('submit', async (event) => {
       showToast(data.message, false);
       return setTimeout(() => location.reload(), 1200);
     }
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!data) {
+      // The server answered, but not with our JSON: a crash, or a proxy/firewall page.
+      showToast(`Il server ha risposto con un errore (${res.status}). Riprova; se continua, avvisa un amministratore.`, false);
+      if (button) button.disabled = false;
+      return;
+    }
     if (data.html) day.innerHTML = data.html;
     showToast(data.message, data.ok);
+    if (!data.ok && button) button.disabled = false;
   } catch {
-    showToast('Connessione non riuscita. Riprova.', false);
+    showToast('Connessione non riuscita: controlla la rete e riprova.', false);
     if (button) button.disabled = false;
   } finally {
     busy = false;
