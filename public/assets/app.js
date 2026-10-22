@@ -1,19 +1,31 @@
 // Progressive enhancement: every form also works without JavaScript.
 
 const REFRESH_MS = 30_000;
+const UNDO_MS = 6_000;
 
 const day = document.querySelector('[data-day]');
 const toast = document.querySelector('[data-toast]');
 let toastTimer;
 let busy = false;
 
-function showToast(message, ok = true) {
+function showToast(message, ok = true, onUndo = null) {
   if (!toast || !message) return;
-  toast.textContent = message;
+  toast.replaceChildren(document.createTextNode(message));
+  if (onUndo) {
+    const undo = document.createElement('button');
+    undo.type = 'button';
+    undo.className = 'toast__undo';
+    undo.textContent = 'Torna indietro';
+    undo.addEventListener('click', () => {
+      toast.hidden = true;
+      onUndo();
+    });
+    toast.append(undo);
+  }
   toast.classList.toggle('toast--error', !ok);
   toast.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.hidden = true; }, 4500);
+  toastTimer = setTimeout(() => { toast.hidden = true; }, onUndo ? UNDO_MS : 4500);
 }
 
 async function refreshDay() {
@@ -27,23 +39,22 @@ async function refreshDay() {
   }
 }
 
-// Join / move / leave without a page reload.
-document.addEventListener('submit', async (event) => {
-  const form = event.target.closest('form[data-ajax]');
-  if (!form || !day) return;
-  event.preventDefault();
+/** The request that reverses the last action, as described by the server's `undo`. */
+function undoBody(original, undo) {
+  const body = new FormData();
+  body.append('_csrf', original.get('_csrf'));
+  body.append('action', undo.action);
+  body.append('slot', undo.slot);
+  body.append('undo', '1');
+  return body;
+}
 
-  const button = event.submitter ?? form.querySelector('button');
+async function send(url, body, button = null) {
   if (button) button.disabled = true;
   busy = true;
 
   try {
-    // Not form.action: the forms have a field named "action", which shadows that property.
-    const res = await fetch(form.getAttribute('action') || location.href, {
-      method: 'POST',
-      body: new FormData(form),
-      headers: { 'X-Requested-With': 'fetch' },
-    });
+    const res = await fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'fetch' } });
     if (res.status === 401 || res.status === 419) {
       const data = await res.json().catch(() => ({}));
       showToast(data.message, false);
@@ -57,7 +68,7 @@ document.addEventListener('submit', async (event) => {
       return;
     }
     if (data.html) day.innerHTML = data.html;
-    showToast(data.message, data.ok);
+    showToast(data.message, data.ok, data.undo ? () => send(url, undoBody(body, data.undo)) : null);
     if (!data.ok && button) button.disabled = false;
   } catch {
     showToast('Connessione non riuscita: controlla la rete e riprova.', false);
@@ -65,6 +76,15 @@ document.addEventListener('submit', async (event) => {
   } finally {
     busy = false;
   }
+}
+
+// Join / move / leave without a page reload.
+document.addEventListener('submit', (event) => {
+  const form = event.target.closest('form[data-ajax]');
+  if (!form || !day) return;
+  event.preventDefault();
+  // Not form.action: the forms have a field named "action", which shadows that property.
+  send(form.getAttribute('action') || location.href, new FormData(form), event.submitter ?? form.querySelector('button'));
 });
 
 if (day) {

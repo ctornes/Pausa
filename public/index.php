@@ -13,12 +13,23 @@ $userId = (int) $user['id'];
 if (is_post()) {
     Csrf::check();
     $slot = (string) ($_POST['slot'] ?? '');
+    // What app.js sends if the person taps "Torna indietro" (not offered when this request is itself an undo).
+    $undo = null;
     try {
-        $message = match ($_POST['action'] ?? '') {
-            'join' => bookings()->join($userId, $slot, $now),
-            'leave' => bookings()->leave($userId, $slot, $now),
-            default => throw new UserError('Azione non riconosciuta.'),
-        };
+        switch ($_POST['action'] ?? '') {
+            case 'join':
+                ['message' => $message, 'movedFrom' => $movedFrom] = bookings()->join($userId, $slot, $now);
+                $undo = $movedFrom !== null
+                    ? ['action' => 'join', 'slot' => $movedFrom]
+                    : ['action' => 'leave', 'slot' => $slot];
+                break;
+            case 'leave':
+                $message = bookings()->leave($userId, $slot, $now);
+                $undo = ['action' => 'join', 'slot' => $slot];
+                break;
+            default:
+                throw new UserError('Azione non riconosciuta.');
+        }
         $ok = true;
     } catch (UserError $e) {
         $message = $e->getMessage();
@@ -29,6 +40,7 @@ if (is_post()) {
         json_response([
             'ok' => $ok,
             'message' => $message,
+            'undo' => $ok && !isset($_POST['undo']) ? $undo : null,
             'html' => view('partials/day', ['day' => bookings()->board($userId, $now), 'user' => $user]),
         ]);
     }

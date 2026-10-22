@@ -519,7 +519,9 @@ input.pin-input {
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
-  max-width: min(92vw, 480px);
+  /* A fixed box at left: 50% would shrink to half the screen; size it to its text instead. */
+  width: max-content;
+  max-width: min(calc(100vw - 32px), 480px);
   padding: 12px 18px;
   border-radius: 14px;
   background: var(--ink);
@@ -726,3 +728,16 @@ select {
   .slot--empty { padding-block: 6px; }
   .jump a span { display: none; }
 }
+
+.toast:has(.toast__undo) { display: flex; align-items: center; gap: 14px; }
+.toast__undo {
+  flex: none;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--paper) 40%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: 600 0.85rem/1 var(--font-body);
+  cursor: pointer;
+}
+.toast__undo:hover { background: color-mix(in srgb, var(--paper) 15%, transparent); }

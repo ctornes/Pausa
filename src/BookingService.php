@@ -129,9 +129,10 @@ final class BookingService
      * Takes the first free seat in $slot today. A person gets one break per window, so a booking
      * elsewhere in the same window (fixed ones included) is moved here.
      *
+     * @return array{message: string, movedFrom: ?string} movedFrom = the slot the break was moved away from
      * @throws UserError
      */
-    public function join(int $userId, string $slot, DateTimeImmutable $now): string
+    public function join(int $userId, string $slot, DateTimeImmutable $now): array
     {
         $date = $now->format('Y-m-d');
         if (!$this->slots->exists($slot)) {
@@ -142,7 +143,7 @@ final class BookingService
         }
         $this->fixed->apply($date);
 
-        return Db::transaction(function (PDO $db) use ($userId, $slot, $date, $now): string {
+        return Db::transaction(function (PDO $db) use ($userId, $slot, $date, $now): array {
             $stmt = $db->prepare('SELECT slot_start, fixed_id FROM bookings WHERE user_id = ? AND date = ? ORDER BY slot_start');
             $stmt->execute([$userId, $date]);
             $mineFixed = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -190,7 +191,10 @@ final class BookingService
 
             $message = $movingFrom !== null ? "Pausa spostata alle $slot" : "Pausa prenotata alle $slot";
 
-            return $message . ($others !== [] ? ' con ' . join_names($others) . '.' : '. Per ora non c\'è nessun altro.');
+            return [
+                'message' => $message . ($others !== [] ? ' con ' . join_names($others) . '.' : '. Per ora non c\'è nessun altro.'),
+                'movedFrom' => $movingFrom,
+            ];
         });
     }
 
