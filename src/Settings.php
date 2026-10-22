@@ -38,11 +38,6 @@ final class Settings
         return (int) ($this->values['capacity'] ?? 2);
     }
 
-    public function maxPerDay(): int
-    {
-        return (int) ($this->values['max_per_day'] ?? 1);
-    }
-
     /** Whether people can create their own (non-admin) account from the login page. */
     public function selfSignup(): bool
     {
@@ -74,7 +69,6 @@ final class Settings
             )),
             'slot_minutes' => (string) $slotMinutes,
             'capacity' => (string) self::intInRange($input, 'capacity', 1, 10, 'Il numero di posti'),
-            'max_per_day' => (string) self::intInRange($input, 'max_per_day', 1, 10, 'Il numero di pause al giorno'),
             'self_signup' => empty($input['self_signup']) ? '0' : '1',
         ];
 

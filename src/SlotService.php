@@ -35,18 +35,32 @@ final class SlotService
 
     public function exists(string $start): bool
     {
+        return $this->windowOf($start) !== null;
+    }
+
+    /** Index of the window (one line of the break hours) holding the slot that starts at $start. */
+    public function windowOf(string $start): ?int
+    {
         if (!Time::isValid($start)) {
-            return false;
+            return null;
         }
-        foreach ($this->windows() as $window) {
+        foreach ($this->windows() as $i => $window) {
             foreach ($window['slots'] as $slot) {
                 if ($slot['start'] === $start) {
-                    return true;
+                    return $i;
                 }
             }
         }
 
-        return false;
+        return null;
+    }
+
+    /** "10:00–12:00" for the window at $index. */
+    public function windowLabel(int $index): string
+    {
+        $window = $this->windows()[$index];
+
+        return $window['start'] . '–' . $window['end'];
     }
 
     public function endOf(string $start): string

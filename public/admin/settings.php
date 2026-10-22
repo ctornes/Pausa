@@ -31,7 +31,6 @@ page('admin/settings', 'Impostazioni', [
         'windows' => $settings->windowsText(),
         'slot_minutes' => $settings->slotMinutes(),
         'capacity' => $settings->capacity(),
-        'max_per_day' => $settings->maxPerDay(),
         'self_signup' => $settings->selfSignup(),
     ],
     'slotCount' => (new SlotService($settings))->count(),

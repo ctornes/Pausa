@@ -35,7 +35,6 @@ final class BookingService
         $this->fixed->apply($date);
         $people = $this->peopleBySlot($date);
         $capacity = $this->settings->capacity();
-        $max = $this->settings->maxPerDay();
 
         $mineFixed = []; // slot start => whether the viewer's booking there is a fixed one
         foreach ($people as $start => $list) {
@@ -45,19 +44,24 @@ final class BookingService
                 }
             }
         }
-        $mineStarts = array_keys($mineFixed);
-        // With one break a day, picking another slot moves the existing booking, as long as it
-        // hasn't started and isn't a fixed break.
-        $canMove = $max === 1 && count($mineStarts) === 1 && !$mineFixed[$mineStarts[0]]
-            && $this->startsAt($date, $mineStarts[0]) > $now;
-        $hasQuota = count($mineStarts) < $max;
+        // One break per window: the viewer's booking in each window, if any.
+        $mineByWindow = [];
+        foreach ($mineFixed as $start => $fixed) {
+            $window = $this->slots->windowOf($start);
+            if ($window !== null) {
+                $mineByWindow[$window] = ['start' => $start, 'fixed' => $fixed];
+            }
+        }
 
         $windows = [];
         $mine = [];
         $waiting = [];
         $nextFree = null;
 
-        foreach ($this->slots->windows() as $window) {
+        foreach ($this->slots->windows() as $windowIndex => $window) {
+            $booked = $mineByWindow[$windowIndex] ?? null;
+            // Picking another slot in the same window moves the booking, unless it has started or is fixed.
+            $canMove = $booked !== null && !$booked['fixed'] && $this->startsAt($date, $booked['start']) > $now;
             $slots = [];
             foreach ($window['slots'] as ['start' => $start, 'end' => $end]) {
                 $list = $people[$start] ?? [];
@@ -78,7 +82,7 @@ final class BookingService
                         $isFixed => null,
                         $isMine => 'leave',
                         $free === 0 => null,
-                        $hasQuota => 'join',
+                        $booked === null => 'join',
                         $canMove => 'move',
                         default => null,
                     };
@@ -102,7 +106,7 @@ final class BookingService
                 if ($isMine) {
                     $mine[] = $slot;
                 }
-                if ($state === 'upcoming' && $free > 0 && !$isMine) {
+                if ($action === 'join') {
                     $nextFree ??= $start;
                     if ($list !== []) {
                         $waiting[] = $slot;
@@ -122,7 +126,8 @@ final class BookingService
     }
 
     /**
-     * Takes the first free seat in $slot today, moving the user's existing break when the daily limit is one.
+     * Takes the first free seat in $slot today. A person gets one break per window, so a booking
+     * elsewhere in the same window is moved here.
      *
      * @throws UserError
      */
@@ -147,18 +152,18 @@ final class BookingService
                 throw new UserError("Sei già nello slot delle $slot.");
             }
 
-            $max = $this->settings->maxPerDay();
+            $window = $this->slots->windowOf($slot);
+            $sameWindow = array_values(array_filter($mine, fn (string $s) => $this->slots->windowOf($s) === $window));
             $movingFrom = null;
-            if (count($mine) >= $max) {
-                if ($max === 1 && $mineFixed[$mine[0]] !== null) {
-                    throw new UserError("La tua pausa delle {$mine[0]} è fissa: per cambiarla chiedi a un amministratore.");
-                } elseif ($max === 1 && $this->startsAt($date, $mine[0]) > $now) {
-                    $movingFrom = $mine[0];
-                } elseif ($max === 1) {
-                    throw new UserError('Hai già usato la pausa di oggi.');
-                } else {
-                    throw new UserError("Hai già $max pause oggi, il massimo consentito.");
+            if ($sameWindow !== []) {
+                $current = $sameWindow[0];
+                if ($mineFixed[$current] !== null) {
+                    throw new UserError("La tua pausa delle $current è assegnata dall'amministrazione: per cambiarla chiedi a un amministratore.");
                 }
+                if ($this->startsAt($date, $current) <= $now) {
+                    throw new UserError('Hai già fatto la pausa della fascia ' . $this->slots->windowLabel($window) . '.');
+                }
+                $movingFrom = $current;
             }
 
             $stmt = $db->prepare('SELECT seat FROM bookings WHERE date = ? AND slot_start = ?');
@@ -204,7 +209,7 @@ final class BookingService
             throw new UserError('Non eri in questo slot.');
         }
         if ($booking['fixed_id'] !== null) {
-            throw new UserError("La tua pausa delle $slot è fissa: per annullarla chiedi a un amministratore.");
+            throw new UserError("La tua pausa delle $slot è assegnata dall'amministrazione: per annullarla chiedi a un amministratore.");
         }
         $this->db->prepare('DELETE FROM bookings WHERE id = ?')->execute([$booking['id']]);
 

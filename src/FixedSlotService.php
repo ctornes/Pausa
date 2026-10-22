@@ -58,17 +58,26 @@ final class FixedSlotService
             $sameSlot->execute([$slot]);
             $sameSlot = $sameSlot->fetchAll(PDO::FETCH_COLUMN);
 
-            $samePerson = $db->prepare('SELECT weekdays FROM fixed_slots WHERE user_id = ?');
+            $window = $this->slots->windowOf($slot);
+            $samePerson = $db->prepare('SELECT slot_start, weekdays FROM fixed_slots WHERE user_id = ?');
             $samePerson->execute([$user['id']]);
-            $samePerson = $samePerson->fetchAll(PDO::FETCH_COLUMN);
+            $samePersonInWindow = [];
+            foreach ($samePerson->fetchAll(PDO::FETCH_KEY_PAIR) as $start => $set) {
+                if ($this->slots->windowOf($start) === $window) {
+                    $samePersonInWindow[] = $set;
+                }
+            }
 
             foreach ($days as $day) {
                 $name = self::WEEKDAY_NAMES[$day];
                 if (self::countOn($sameSlot, $day) >= $this->settings->capacity()) {
                     throw new UserError("Il $name alle $slot i posti fissi sono già tutti occupati.");
                 }
-                if (self::countOn($samePerson, $day) >= $this->settings->maxPerDay()) {
-                    throw new UserError("{$user['name']} ha già una pausa fissa il $name.");
+                if (self::countOn($samePersonInWindow, $day) > 0) {
+                    throw new UserError(sprintf(
+                        '%s ha già una pausa fissa il %s nella fascia %s.',
+                        $user['name'], $name, $this->slots->windowLabel($window),
+                    ));
                 }
             }
 
@@ -131,8 +140,11 @@ final class FixedSlotService
                 $mine = $db->prepare('SELECT slot_start FROM bookings WHERE user_id = ? AND date = ?');
                 $mine->execute([$userId, $date]);
                 $mine = $mine->fetchAll(PDO::FETCH_COLUMN);
-                if (in_array($slot, $mine, true) || count($mine) >= $this->settings->maxPerDay()) {
-                    continue;
+                $window = $this->slots->windowOf($slot);
+                foreach ($mine as $booked) {
+                    if ($this->slots->windowOf($booked) === $window) {
+                        continue 2; // already has a break in this window
+                    }
                 }
 
                 $seats = $db->prepare('SELECT seat FROM bookings WHERE date = ? AND slot_start = ?');

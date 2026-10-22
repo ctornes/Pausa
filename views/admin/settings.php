@@ -9,7 +9,7 @@
         <label class="field">
             <span class="field__label">Fasce orarie</span>
             <textarea name="windows" rows="3" required><?= e((string) $values['windows']) ?></textarea>
-            <span class="field__hint">Una per riga, nel formato 10:00-12:00.</span>
+            <span class="field__hint">Una per riga, nel formato 10:00-12:00. Ognuno può prenotare una sola pausa per fascia.</span>
         </label>
         <div class="grid-2">
             <label class="field">
@@ -19,10 +19,6 @@
             <label class="field">
                 <span class="field__label">Persone per slot</span>
                 <input type="number" name="capacity" min="1" max="10" value="<?= e((string) $values['capacity']) ?>" required>
-            </label>
-            <label class="field">
-                <span class="field__label">Pause al giorno per persona</span>
-                <input type="number" name="max_per_day" min="1" max="10" value="<?= e((string) $values['max_per_day']) ?>" required>
             </label>
         </div>
         <p class="summary">

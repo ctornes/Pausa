@@ -3,14 +3,12 @@
 use App\Csrf;
 
 $userId = (int) $user['id'];
-$active = null;
-foreach ($day['mine'] as $slot) {
-    if ($slot['state'] !== 'past') {
-        $active = $slot;
-        break;
-    }
-}
-$done = $active === null && $day['mine'] !== [];
+// The hero shows the viewer's next break; with one per window there can be another one later.
+$upcomingMine = array_values(array_filter($day['mine'], fn (array $s) => $s['state'] !== 'past'));
+$active = $upcomingMine[0] ?? null;
+$later = $upcomingMine[1] ?? null;
+$canStillBook = $day['waiting'] !== [] || $day['nextFree'] !== null;
+$done = $active === null && $day['mine'] !== [] && !$canStillBook;
 $others = fn (array $slot) => array_values(array_filter($slot['people'], fn (array $p) => $p['user_id'] !== $userId));
 $labels = ['join' => 'Unisciti', 'move' => 'Sposta qui', 'leave' => 'Annulla'];
 
@@ -52,12 +50,15 @@ $actionForm = function (array $slot, string $class = '') use ($labels): string {
         <?php elseif ($active['isFixed'] && $active['state'] === 'upcoming'): ?>
             <p class="hero__note">Pausa assegnata dall'amministrazione: per cambiarla o annullarla chiedi a un amministratore.</p>
         <?php endif ?>
+        <?php if ($later): ?>
+            <p class="hero__note">Hai un'altra pausa alle <strong><?= e($later['start']) ?></strong>.</p>
+        <?php endif ?>
     <?php elseif ($done): $last = end($day['mine']); ?>
         <p class="eyebrow">Pausa fatta</p>
         <p class="hero__time"><?= e($last['start']) ?><span class="hero__end">–<?= e($last['end']) ?></span></p>
         <p class="hero__lead">Per oggi sei a posto. Ci vediamo domani.</p>
     <?php else: ?>
-        <p class="eyebrow">Non hai ancora una pausa</p>
+        <p class="eyebrow"><?= $day['mine'] === [] ? 'Non hai ancora una pausa' : 'Puoi prenotare un\'altra pausa' ?></p>
         <?php if ($day['waiting']): $first = $day['waiting'][0]; ?>
             <p class="hero__lead hero__lead--big">
                 <strong><?= e(join_names(array_column($first['people'], 'name'))) ?></strong>
