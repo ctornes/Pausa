@@ -42,7 +42,7 @@
         <div class="grid-2">
             <label class="field">
                 <span class="field__label">Nome e cognome</span>
-                <input type="text" name="name" maxlength="40" required autocomplete="off">
+                <input type="text" name="name" maxlength="60" required autocomplete="off">
             </label>
             <label class="field">
                 <span class="field__label">PIN di 4 cifre</span>
@@ -65,7 +65,7 @@
                 <input type="hidden" name="id" value="<?= (int) $person['id'] ?>">
                 <?= avatar((int) $person['id'], $person['name'], $person['photo_version']) ?>
                 <div class="user-row__fields">
-                    <input type="text" name="name" value="<?= e($person['name']) ?>" maxlength="40" required aria-label="Nome">
+                    <input type="text" name="name" value="<?= e($person['name']) ?>" maxlength="60" required aria-label="Nome">
                     <input class="pin-input" type="text" name="pin" inputmode="numeric" pattern="\d{4}" maxlength="4"
                            placeholder="PIN" autocomplete="off" aria-label="Nuovo PIN per <?= e($person['name']) ?>">
                     <label class="check"><input type="checkbox" name="is_admin" <?= $person['is_admin'] ? 'checked' : '' ?>> Admin</label>

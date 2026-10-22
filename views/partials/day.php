@@ -129,7 +129,7 @@ foreach ($shown as $i => $entry) {
                         <?php foreach ($slot['people'] as $p): $me = $p['user_id'] === $userId; ?>
                             <span class="seat<?= $me ? ' seat--me' : '' ?>">
                                 <?= avatar($p['user_id'], $p['name'], $p['photo']) ?>
-                                <span class="seat__name"><?= $me ? 'Tu' : e($p['name']) ?></span>
+                                <span class="seat__name" title="<?= e($p['name']) ?>"><?= $me ? 'Tu' : e($p['name']) ?></span>
                             </span>
                         <?php endforeach ?>
                         <?php for ($s = 0; !$empty && $s < $slot['free']; $s++): ?>

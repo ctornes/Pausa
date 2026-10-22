@@ -24,7 +24,7 @@
                         <?php foreach ($people as $p): ?>
                             <span class="seat">
                                 <?= avatar($p['user_id'], $p['name'], $p['photo'], 'avatar--sm') ?>
-                                <span class="seat__name"><?= e($p['name']) ?></span>
+                                <span class="seat__name" title="<?= e($p['name']) ?>"><?= e($p['name']) ?></span>
                                 <?php if ($p['fixed']): ?><span class="seat__fixed">fissa</span><?php endif ?>
                                 <?php if ($canEdit): ?>
                                     <form method="post" action="<?= url('/admin/history.php') ?>">

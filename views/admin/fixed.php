@@ -63,7 +63,7 @@ use App\FixedSlotService;
                     <td>
                         <span class="seat">
                             <?= avatar((int) $row['user_id'], $row['name'], $row['photo_version'], 'avatar--sm') ?>
-                            <span class="seat__name"><?= e($row['name']) ?></span>
+                            <span class="seat__name" title="<?= e($row['name']) ?>"><?= e($row['name']) ?></span>
                         </span>
                         <?php if (!$row['active']): ?>
                             <div class="warning">Persona disattivata: la pausa non viene prenotata.</div>

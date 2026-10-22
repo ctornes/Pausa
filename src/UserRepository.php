@@ -160,8 +160,8 @@ final class UserRepository
     private static function validName(string $name): string
     {
         $name = trim(preg_replace('/\s+/', ' ', $name) ?? '');
-        if ($name === '' || mb_strlen($name) > 40) {
-            throw new UserError('Il nome deve avere tra 1 e 40 caratteri.');
+        if ($name === '' || mb_strlen($name) > 60) {
+            throw new UserError('Il nome deve avere tra 1 e 60 caratteri.');
         }
 
         return $name;

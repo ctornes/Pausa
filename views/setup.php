@@ -10,7 +10,7 @@
         <?= Csrf::field() ?>
         <label class="field">
             <span class="field__label">Nome e cognome</span>
-            <input type="text" name="name" value="<?= e($name) ?>" maxlength="40" required autofocus autocomplete="name">
+            <input type="text" name="name" value="<?= e($name) ?>" maxlength="60" required autofocus autocomplete="name">
         </label>
         <label class="field">
             <span class="field__label">PIN di 4 cifre</span>

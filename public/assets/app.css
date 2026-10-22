@@ -316,7 +316,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 5rem 1fr auto;
+  /* minmax(0, …): a long name must shrink (with an ellipsis), not push the column into the button. */
+  grid-template-columns: 5rem minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px 16px;
   padding: 12px 16px;
@@ -331,8 +332,8 @@ a { color: var(--accent); text-underline-offset: 3px; }
 
 .slot__seats { display: flex; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
 
-.seat { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.seat__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.seat { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.seat__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .seat--free .seat__name { color: var(--muted); font-weight: 400; }
 .seat--me .avatar { box-shadow: 0 0 0 3px var(--mine-strong); }
 
@@ -354,7 +355,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .slot--past .seat--free { display: none; }
 
 @media (max-width: 560px) {
-  .slot { grid-template-columns: 4.1rem 1fr auto; gap: 10px; padding: 12px 12px 12px 14px; }
+  .slot { grid-template-columns: 4.1rem minmax(0, 1fr) auto; gap: 10px; padding: 12px 12px 12px 14px; }
   .slot__time { align-self: start; }
   .slot__seats { flex-direction: column; gap: 6px; }
   .slot__action .button { padding-inline: 14px; }
@@ -741,3 +742,6 @@ select {
   cursor: pointer;
 }
 .toast__undo:hover { background: color-mix(in srgb, var(--paper) 15%, transparent); }
+
+/* Long names in the top bar shouldn't push the menu around. */
+.who__name span:last-child { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
