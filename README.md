@@ -22,7 +22,7 @@ Apri http://localhost:8000: al primo avvio crei l'amministratore, poi da **Perso
 - Gli admin possono assegnare **pause fisse**: la stessa persona nello stesso slot nei giorni scelti, prenotata in automatico ogni giorno. La persona non può annullarla né spostarla; per saltare un giorno l'admin la toglie dallo Storico.
 - Si può **installare come app** sul telefono o sul computer (PWA): su Android/Chrome "Installa app", su iPhone Safari → Condividi → Aggiungi alla schermata Home.
 - **Promemoria**: da **Il mio profilo** ognuno attiva le notifiche sul proprio dispositivo e sceglie se riceverle 1, 2 o 5 minuti prima della pausa. Su iPhone funzionano solo dall'app installata (iOS 16.4+).
-- Gli admin gestiscono persone, orari (fasce, durata, posti per slot, pause al giorno) e vedono lo storico.
+- Gli admin gestiscono persone, orari (fasce, durata, posti per slot), pause fisse e registrazioni, e vedono lo storico.
 
 ## Struttura
 
