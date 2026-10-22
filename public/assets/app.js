@@ -78,3 +78,10 @@ pin?.addEventListener('input', () => {
   pin.value = pin.value.replace(/\D/g, '').slice(0, 4);
   if (pin.value.length === 4) pin.form.requestSubmit();
 });
+
+// Installable app + reminders: the service worker lives at the app root (see sw.js).
+if ('serviceWorker' in navigator && document.documentElement.dataset.sw) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(document.documentElement.dataset.sw).catch(() => {});
+  });
+}

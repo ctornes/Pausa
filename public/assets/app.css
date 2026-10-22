@@ -66,6 +66,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Components set display (flex, grid…); the hidden attribute must still win. */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -664,3 +667,12 @@ select {
 .request__who { display: grid; gap: 2px; flex: 1 1 160px; }
 .request__actions { display: flex; gap: 8px; }
 .request__actions form { margin: 0; }
+
+/* ---------- Reminders ---------- */
+
+.push__status { margin: 0; font-weight: 500; }
+.push__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.push__minutes { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.push__minutes .field { flex: 0 1 220px; }
+.push__help summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.push__help p { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }

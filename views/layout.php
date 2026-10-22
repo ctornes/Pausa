@@ -16,13 +16,20 @@ $badges = $user && $user['is_admin'] ? ['/admin/users.php' => users()->pendingCo
 $flash = flash();
 ?>
 <!doctype html>
-<html lang="it">
+<html lang="it" data-sw="<?= url('/sw.js') ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
     <title><?= e($title) ?> · <?= e(config('app_name')) ?></title>
     <link rel="icon" href="<?= asset('icon.svg') ?>" type="image/svg+xml">
+    <link rel="manifest" href="<?= url('/manifest.json') ?>">
+    <link rel="apple-touch-icon" href="<?= url('/assets/icons/apple-touch-icon.png') ?>">
+    <meta name="theme-color" content="#f1f4f2" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#131917" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-title" content="<?= e(config('app_name')) ?>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="<?= asset('app.css') ?>">
     <script src="<?= asset('app.js') ?>" defer></script>
     <?php foreach ($scripts ?? [] as $src): ?>

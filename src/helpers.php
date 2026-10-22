@@ -6,6 +6,8 @@ use App\BookingService;
 use App\Db;
 use App\FixedSlotService;
 use App\PhotoStore;
+use App\PushService;
+use App\ReminderService;
 use App\Settings;
 use App\SlotService;
 use App\UserRepository;
@@ -170,4 +172,18 @@ function bookings(): BookingService
     static $bookings = null;
 
     return $bookings ??= new BookingService(Db::get(), settings(), new SlotService(settings()), fixed_slots());
+}
+
+function push(): PushService
+{
+    static $push = null;
+
+    return $push ??= new PushService(Db::get(), dirname(config('db_path')) . '/vapid.json', config('push_subject'));
+}
+
+function reminders(): ReminderService
+{
+    static $reminders = null;
+
+    return $reminders ??= new ReminderService(Db::get(), push(), fixed_slots());
 }

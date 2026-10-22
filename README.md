@@ -1,11 +1,13 @@
 # Pausa
 
 Prenotazione delle pause giornaliere: slot da 10 minuti, 2 persone per slot.
-PHP 8.2+ con estensione `pdo_sqlite`, nessuna dipendenza.
+PHP 8.2+ con le estensioni `pdo_sqlite`, `gd`, `curl`, `openssl`, `mbstring`.
+Le librerie per le notifiche si installano con Composer (`composer install`).
 
 ## Avvio in locale
 
 ```bash
+composer install
 php -S localhost:8000 -t public
 ```
 
@@ -19,6 +21,8 @@ Apri http://localhost:8000: al primo avvio crei l'amministratore, poi da **Perso
 - Nella pagina **Oggi** si prenota uno slot libero o ci si unisce a chi è già prenotato. Ognuno può avere una sola pausa per fascia oraria (es. una al mattino e una al pomeriggio); scegliere un altro slot nella stessa fascia sposta la prenotazione.
 - Si può annullare o spostare la pausa fino all'inizio dello slot. La pagina si aggiorna da sola ogni 30 secondi.
 - Gli admin possono assegnare **pause fisse**: la stessa persona nello stesso slot nei giorni scelti, prenotata in automatico ogni giorno. La persona non può annullarla né spostarla; per saltare un giorno l'admin la toglie dallo Storico.
+- Si può **installare come app** sul telefono o sul computer (PWA): su Android/Chrome "Installa app", su iPhone Safari → Condividi → Aggiungi alla schermata Home.
+- **Promemoria**: da **Il mio profilo** ognuno attiva le notifiche sul proprio dispositivo e sceglie se riceverle 1, 2 o 5 minuti prima della pausa. Su iPhone funzionano solo dall'app installata (iOS 16.4+).
 - Gli admin gestiscono persone, orari (fasce, durata, posti per slot, pause al giorno) e vedono lo storico.
 
 ## Struttura
@@ -37,3 +41,13 @@ Punta la document root del sito su `public/` e assicurati che `data/` sia scrivi
 Usa **HTTPS**: i browser aprono l'anteprima live della fotocamera solo su pagine sicure (o su `localhost`). Su http il pulsante "Scatta una foto" apre comunque l'app fotocamera del telefono, ma sul computer la webcam non è disponibile.
 Se l'app sta in una sottocartella (es. `/pausa`), imposta `base_url` in `config.php`.
 Per aggiungere una persona da terminale: `php bin/create-user.php "Nome Cognome" [--admin]`.
+
+### Promemoria in produzione (Plesk)
+
+1. **Librerie** — in *Git* → impostazioni del repository → *Azioni di distribuzione aggiuntive*, aggiungi
+   `composer install --no-dev --optimize-autoloader` (oppure usa lo strumento *PHP Composer* del dominio e premi *Installa*).
+2. **Invio ogni minuto** — in *Operazioni pianificate* aggiungi un'operazione *Esegui uno script PHP*:
+   script `httpdocs/bin/send-reminders.php`, frequenza *Ogni minuto* (`* * * * *`), stessa versione PHP del sito.
+
+La chiave del server per le notifiche viene creata da sola in `data/vapid.json`: includila nei backup e non cancellarla,
+altrimenti tutti dovranno riattivare i promemoria.

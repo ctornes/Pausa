@@ -4,6 +4,7 @@ require dirname(__DIR__) . '/src/bootstrap.php';
 
 use App\Auth;
 use App\Csrf;
+use App\PushService;
 use App\UserError;
 
 $user = Auth::requireUser();
@@ -20,6 +21,9 @@ if (is_post()) {
                 ?? throw new UserError('Scatta o scegli una foto prima di salvare.');
             photos()->save($userId, $photo);
             flash('Foto aggiornata.');
+        } elseif ($action === 'reminders') {
+            push()->setReminderMinutes($userId, (int) ($_POST['reminder_minutes'] ?? 0));
+            flash('Preferenze dei promemoria salvate.');
         } elseif ($action === 'remove_photo') {
             photos()->delete($userId);
             flash('Foto rimossa.');
@@ -48,5 +52,10 @@ page('account', 'Il mio profilo', [
     'error' => $error,
     'photoError' => $photoError,
     'photoUrl' => $user['photo_version'] !== null ? url("/photo.php?u=$userId&v={$user['photo_version']}") : null,
-    'scripts' => ['photo-field.js'],
+    'push' => PushService::available() ? [
+        'key' => push()->publicKey(),
+        'devices' => push()->deviceCount($userId),
+        'minutes' => (int) $user['reminder_minutes'],
+    ] : null,
+    'scripts' => ['photo-field.js', 'push.js'],
 ]);

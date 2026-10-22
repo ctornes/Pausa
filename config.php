@@ -12,4 +12,6 @@ return [
     // A 4-digit PIN is weak on its own: lock the account after a few wrong attempts.
     'pin_max_attempts' => 5,
     'pin_lock_minutes' => 5,
+    // Identifies the sender to push services (Web Push "VAPID subject"): the site URL or a mailto: address.
+    'push_subject' => 'https://pause.tamtamadv.com',
 ];

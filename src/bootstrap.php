@@ -12,6 +12,11 @@ spl_autoload_register(function (string $class): void {
 
 require APP_ROOT . '/src/helpers.php';
 
+// Third-party libraries (web push). The app still runs without them; reminders are then unavailable.
+if (is_file(APP_ROOT . '/vendor/autoload.php')) {
+    require APP_ROOT . '/vendor/autoload.php';
+}
+
 // Warnings become exceptions: a stray warning printed before a JSON reply would break it,
 // and a failed write must stop the request instead of carrying on half-done.
 set_error_handler(function (int $level, string $message, string $file, int $line): bool {
